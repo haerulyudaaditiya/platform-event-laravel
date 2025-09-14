@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'Platform Event') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -32,5 +32,24 @@
                 {{ $slot }}
             </main>
         </div>
+        @stack('scripts')
+
+            @auth
+            @if(auth()->user()->role === 'organizer')
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        // Dengarkan di channel privat milik organizer yang sedang login
+                        window.Echo.private('organizer.{{ auth()->id() }}')
+                            .listen('TicketSold', (e) => {
+                                // Tampilkan notifikasi sederhana
+                                alert(`Tiket Terjual! ${e.buyer_name} baru saja membeli tiket untuk event "${e.event_name}"`);
+
+                                // Di aplikasi nyata, Anda bisa menggunakan library notifikasi
+                                // yang lebih cantik daripada alert().
+                            });
+                    });
+                </script>
+            @endif
+        @endauth
     </body>
 </html>

@@ -7,6 +7,25 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h4 class="text-sm font-medium text-gray-500">Total Event</h4>
+                    <p class="mt-1 text-3xl font-semibold text-gray-900">{{ $totalEvents }}</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h4 class="text-sm font-medium text-gray-500">Total Tiket Terjual</h4>
+                    <p class="mt-1 text-3xl font-semibold text-gray-900">{{ $ticketsSold }}</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h4 class="text-sm font-medium text-gray-500">Total Pendapatan</h4>
+                    <p class="mt-1 text-3xl font-semibold text-gray-900">Rp {{ number_format($totalRevenue) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <div class="flex justify-between items-center mb-4">
@@ -59,13 +78,15 @@
                                         </form>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a href="{{ route('events.attendees', $event) }}" class="text-green-600 hover:text-green-900 mr-4">Peserta</a>
+                                            <a href="{{ route('tickets.index', $event) }}" class="text-blue-600 hover:text-blue-900 mr-4">Tiket</a>
+                                            <a href="{{ route('events.scanner', $event) }}" class="text-purple-600 hover:text-purple-900 mr-4">Scan Tiket</a>
                                             <a href="{{ route('events.edit', $event) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
                                             <form class="inline-block" action="{{ route('events.destroy', $event) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus event ini?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-600 hover:text-red-900 ml-4">Hapus</button>
                                             </form>
-                                            <a href="{{ route('tickets.index', $event) }}" class="text-blue-600 hover:text-blue-900 mr-4">Tiket</a>
                                         </td>
                                     </tr>
                                 @empty

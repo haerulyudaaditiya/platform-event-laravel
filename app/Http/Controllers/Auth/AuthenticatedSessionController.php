@@ -22,13 +22,21 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
+    // KODE BARU
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Cek peran pengguna setelah login berhasil
+        if ($request->user()->role === 'organizer') {
+            // Jika organizer, arahkan ke halaman manajemen event
+            return redirect()->intended(route('events.index'));
+        }
+
+        // Untuk semua peran lain (user biasa), arahkan ke homepage
+        return redirect()->intended('/');
     }
 
     /**

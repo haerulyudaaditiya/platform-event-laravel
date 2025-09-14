@@ -3,6 +3,8 @@
 // app/Providers/AuthServiceProvider.php
 namespace App\Providers;
 
+use App\Models\Booking;
+use App\Policies\BookingPolicy;
 use App\Models\Event; // <-- Tambahkan ini
 use App\Policies\EventPolicy; // <-- Tambahkan ini
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -16,7 +18,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         // 'App\Models\Model' => 'App\Policies\ModelPolicy',
-        Event::class => EventPolicy::class, // <-- Tambahkan baris ini
+        Event::class => EventPolicy::class,
+        Booking::class => BookingPolicy::class,
     ];
 
     // ...

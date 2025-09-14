@@ -7,14 +7,33 @@ use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $events = Event::where('is_published', true) // Hanya ambil event yang sudah di-publish
-                         ->where('start_time', '>', now()) // Hanya ambil event yang akan datang
-                         ->orderBy('start_time', 'asc') // Urutkan dari yang paling dekat tanggalnya
-                         ->paginate(9); // Ambil 9 event per halaman
+        // Mulai query builder
+        $query = Event::where('is_published', true)
+                    ->where('start_time', '>', now())
+                    ->withMin('tickets', 'price');
 
-        return view('welcome', compact('events'));
+        // 1. Filter berdasarkan Kategori
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category', $request->category);
+        }
+
+        // 2. Filter berdasarkan Pencarian (Search)
+        if ($request->has('search') && $request->search != '') {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Eksekusi query
+        $events = $query->latest()->paginate(6)->withQueryString();
+
+        // Ambil daftar kategori unik untuk ditampilkan di menu
+        $categories = Event::where('is_published', true)
+                            ->where('start_time', '>', now())
+                            ->distinct()
+                            ->pluck('category');
+
+        return view('welcome', compact('events', 'categories'));
     }
 
     public function show(Event $event)

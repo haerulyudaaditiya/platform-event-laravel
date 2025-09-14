@@ -12,7 +12,7 @@
                     <x-auth-session-status class="mb-4" :status="session('success')" />
                     <x-input-error :messages="$errors->all()" class="mb-4"/>
 
-                    <form method="POST" action="{{ route('events.store') }}">
+                    <form method="POST" action="{{ route('events.store') }}" enctype="multipart/form-data">
                         @csrf
 
                         <div>
@@ -21,8 +21,14 @@
                         </div>
 
                         <div class="mt-4">
+                            <x-input-label for="image" :value="__('Gambar Event')" />
+                            <input id="image" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" type="file" name="image" />
+                            <x-input-error :messages="$errors->get('image')" class="mt-2" />
+                        </div>
+
+                        <div class="mt-4">
                             <x-input-label for="description" :value="__('Deskripsi')" />
-                            <textarea id="description" name="description" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('description') }}</textarea>
+                            <textarea id="description" name="description" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required autofocus>{{ old('description') }}</textarea>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -44,6 +50,16 @@
                         <div class="mt-4">
                             <x-input-label for="location" :value="__('Lokasi (Alamat / Link Gmaps)')" />
                             <x-text-input id="location" class="block mt-1 w-full" type="text" name="location" :value="old('location')" required />
+                        </div>
+
+                        <div class="mt-4">
+                            <x-input-label for="category" :value="__('Kategori Event')" />
+                            <select name="category" id="category" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                <option value="Musik" {{ (old('category', $event->category ?? '')) == 'Musik' ? 'selected' : '' }}>Musik</option>
+                                <option value="Seminar" {{ (old('category', $event->category ?? '')) == 'Seminar' ? 'selected' : '' }}>Seminar</option>
+                                <option value="Olahraga" {{ (old('category', $event->category ?? '')) == 'Olahraga' ? 'selected' : '' }}>Olahraga</option>
+                                <option value="Festival" {{ (old('category', $event->category ?? '')) == 'Festival' ? 'selected' : '' }}>Festival</option>
+                            </select>
                         </div>
 
                         <div class="flex items-center justify-end mt-4">

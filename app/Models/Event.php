@@ -14,12 +14,14 @@ class Event extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'image',
         'description',
         'start_time',
         'end_time',
         'venue',
         'location',
         'is_published',
+        'category',
     ];
 
     // Definisikan relasi: Sebuah Event dimiliki oleh seorang User (Organizer)
@@ -31,5 +33,10 @@ class Event extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
     }
 }

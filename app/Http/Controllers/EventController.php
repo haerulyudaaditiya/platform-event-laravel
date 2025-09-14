@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Booking;
 use Illuminate\Http\Request;;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
@@ -16,11 +18,23 @@ class EventController extends Controller
      */
     public function index()
     {
-        // Ambil event yang dibuat oleh user yang sedang login saja
-        // Urutkan berdasarkan yang terbaru, dan gunakan paginasi
-        $events = Auth::user()->events()->latest()->paginate(10);
+        $organizer = auth()->user();
+        $events = $organizer->events()->latest()->paginate(10);
 
-        return view('events.index', compact('events'));
+        // Hitung statistik
+        $totalEvents = $organizer->events()->count();
+        // Ambil semua ID event milik organizer ini
+        $eventIds = $organizer->events()->pluck('id');
+        // Cari semua booking yang sudah lunas untuk event-event tersebut
+        $paidBookings = Booking::whereIn('event_id', $eventIds)->where('status', 'paid')->get();
+
+        $totalRevenue = $paidBookings->sum('total_price');
+        $ticketsSold = 0;
+        foreach($paidBookings as $booking) {
+            $ticketsSold += $booking->tickets->sum('pivot.quantity');
+        }
+
+        return view('events.index', compact('events', 'totalEvents', 'ticketsSold', 'totalRevenue'));
     }
 
     /**
@@ -45,7 +59,15 @@ class EventController extends Controller
             'end_time' => 'required|date|after_or_equal:start_time',
             'venue' => 'required|string|max:255',
             'location' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'category' => 'required|string|in:Musik,Seminar,Olahraga,Festival',
         ]);
+
+        if ($request->hasFile('image')) {
+            // Simpan gambar di folder 'storage/app/public/event-images'
+            $path = $request->file('image')->store('event-images', 'public');
+            $validated['image'] = $path;
+        }
 
         // 2. Tambahkan user_id dari user yang sedang login
         $validated['user_id'] = Auth::id();
@@ -92,7 +114,19 @@ class EventController extends Controller
             'end_time' => 'required|date|after_or_equal:start_time',
             'venue' => 'required|string|max:255',
             'location' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'category' => 'required|string|in:Musik,Seminar,Olahraga,Festival',
         ]);
+
+        if ($request->hasFile('image')) {
+            // Hapus gambar lama jika ada
+            if ($event->image) {
+                Storage::disk('public')->delete($event->image);
+            }
+            // Simpan gambar baru
+            $path = $request->file('image')->store('event-images', 'public');
+            $validated['image'] = $path;
+        }
 
         $event->update($validated);
 
@@ -127,5 +161,61 @@ class EventController extends Controller
         $message = $event->is_published ? 'Event berhasil di-publish.' : 'Event berhasil di-unpublish.';
 
         return back()->with('success', $message);
+    }
+
+    public function attendees(Event $event)
+    {
+        // 1. Otorisasi: Pastikan hanya pemilik event yang bisa melihat pesertanya
+        $this->authorize('update', $event);
+
+        // 2. Ambil semua booking untuk event ini yang statusnya sudah 'paid'
+        $bookings = $event->bookings()
+                          ->where('status', 'paid')
+                          ->with('user', 'tickets') // Eager load untuk optimasi
+                          ->latest()
+                          ->paginate(10);
+
+        // 3. Tampilkan view dengan data yang sudah diambil
+        return view('events.attendees', compact('event', 'bookings'));
+    }
+
+    public function scanner(Event $event)
+    {
+        // Otorisasi: Pastikan hanya pemilik event yang bisa mengakses scanner
+        $this->authorize('update', $event);
+
+        return view('events.scanner', compact('event'));
+    }
+
+    public function scanTicket(Request $request)
+    {
+        $validated = $request->validate([
+            'unique_code' => 'required|string|exists:bookings,unique_code',
+        ]);
+
+        $booking = Booking::where('unique_code', $validated['unique_code'])->first();
+
+        // Cek apakah tiket sudah pernah di-check-in
+        if ($booking->status == 'checked-in') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tiket ini sudah di-check-in.',
+                'data' => [
+                    'name' => $booking->user->name,
+                    'checked_in_at' => $booking->updated_at->format('d M Y, H:i'),
+                ]
+            ], 409); // 409 Conflict
+        }
+
+        // Jika valid, update statusnya
+        $booking->update(['status' => 'checked-in']);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Check-in Berhasil!',
+            'data' => [
+                'name' => $booking->user->name,
+            ]
+        ]);
     }
 }
