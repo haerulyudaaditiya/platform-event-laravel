@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash; // <-- Pastikan ini ada
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +13,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Buat Organizer
+        User::create([
+            'name' => 'Organizer Acara',
+            'email' => 'organizer@example.com',
+            'phone_number' => '081200000002',
+            'password' => Hash::make('admin12345'),
+            'role' => 'organizer',
+            'email_verified_at' => now(),
+        ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        User::create([
+            'name' => 'Pengguna Biasa',
+            'email' => 'user@example.com',
+            'phone_number' => '081200000003',
+            'password' => Hash::make('admin12345'),
+            'role' => 'user',
+            'email_verified_at' => now(),
         ]);
     }
 }
