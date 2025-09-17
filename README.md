@@ -1,61 +1,116 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Platform Event Laravel
+
+Sebuah platform manajemen dan penjualan tiket event modern yang dibangun dari nol menggunakan Laravel 12. Proyek ini mencakup alur kerja lengkap mulai dari pembuatan event oleh organizer, pemesanan dan pembayaran oleh pengguna, hingga check-in peserta menggunakan QR Code.
+
+---
+
+## 📸 Screenshot
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="./.github/images/utama.png" alt="Halaman Utama" width="45%">
+  <img src="./.github/images/detail.png" alt="Detail Event" width="45%">
+  <img src="./.github/images/dashboard.png" alt="Dasbor Organizer" width="45%">
+  <img src="./.github/images/keranjang.png" alt="Keranjang" width="45%">
+  <img src="./.github/images/etiket.png" alt="E-Tiket" width="45%">
+  <img src="./.github/images/scanner.png" alt="Halaman Scanner" width="45%">
 </p>
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## ✨ Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Untuk Pengguna:
+- ✅ **Pencarian & Filter**: Mencari event berdasarkan nama dan memfilter berdasarkan kategori.
+- ✅ **Keranjang Multi-Item**: Memesan beberapa tiket dari event yang berbeda dalam satu alur.
+- ✅ **Pembayaran Online**: Integrasi dengan Midtrans (mode Sandbox) untuk memproses pembayaran.
+- ✅ **Riwayat Pesanan**: Halaman khusus untuk melihat semua riwayat transaksi dengan filter lengkap.
+- ✅ **E-Tiket & QR Code**: Menerima E-Tiket dengan QR Code unik setelah pembayaran berhasil.
+- ✅ **Notifikasi Email**: Menerima email konfirmasi dan verifikasi yang dikirim melalui antrian.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Untuk Organizer:
+- ✅ **Dasbor Analitik**: Melihat ringkasan total event, pendapatan, dan tiket terjual, lengkap dengan grafik penjualan 7 hari terakhir.
+- ✅ **Manajemen Event**: CRUD penuh untuk event, termasuk upload gambar dan pengaturan kategori.
+- ✅ **Manajemen Tiket**: CRUD penuh untuk jenis-jenis tiket di setiap event.
+- ✅ **Daftar Peserta**: Melihat daftar peserta yang sudah membayar untuk setiap event.
+- ✅ **Notifikasi Real-Time**: Menerima notifikasi *pop-up* instan saat ada tiket terjual.
+- ✅ **Scanner QR Code**: Halaman *check-in* untuk memvalidasi tiket peserta di lokasi acara.
 
-## Learning Laravel
+### Sistem & Keamanan:
+- ✅ **Otentikasi Berbasis Peran**: Sistem membedakan hak akses antara Tamu, User, dan Organizer.
+- ✅ **Verifikasi Email**: Pengguna baru harus memverifikasi email mereka sebelum bisa melakukan transaksi.
+- ✅ **Keamanan Form**: Dilengkapi dengan Google reCAPTCHA v2 untuk mencegah pendaftaran bot.
+- ✅ **Tugas Otomatis**:
+    - **Queues**: Tugas yang berjalan lama (seperti mengirim email) diproses di latar belakang.
+    - **Scheduler**: Pesanan yang tidak dibayar akan otomatis dibatalkan setelah 1 jam.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🚀 Teknologi yang Digunakan
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Backend**: Laravel 12, PHP 8.2
+- **Frontend**: Blade, Tailwind CSS, Alpine.js
+- **Database**: MySQL
+- **Real-Time**: Laravel Reverb (WebSockets)
+- **Pembayaran**: Midtrans (Sandbox)
+- **Antrian & Jadwal**: Laravel Queues & Scheduler dengan driver Database
+- **Lainnya**: Chart.js, SweetAlert2, Laravel Excel (untuk ekspor), Simple QR Code
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🛠️ Instalasi & Setup Lokal
 
-### Premium Partners
+1.  **Clone repositori:**
+    ```bash
+    git clone [https://github.com/haerulyudaaditiya/platform-event-laravel](https://github.com/haerulyudaaditiya/platform-event-laravel)
+    cd platform-event-laravel
+    ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+2.  **Install dependensi:**
+    ```bash
+    composer install
+    npm install
+    ```
 
-## Contributing
+3.  **Setup Environment:**
+    ```bash
+    cp .env.example .env
+    php artisan key:generate
+    ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4.  **Konfigurasi file `.env`** Anda dengan kredensial database, Midtrans, Mail, dan reCAPTCHA.
 
-## Code of Conduct
+5.  **Jalankan migrasi database:**
+    ```bash
+    php artisan migrate
+    ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+6.  **Buat symbolic link untuk storage:**
+    ```bash
+    php artisan storage:link
+    ```
 
-## Security Vulnerabilities
+7.  **Jalankan semua server development** (masing-masing di terminal terpisah):
+    ```bash
+    # Server Web
+    php artisan serve
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    # Compiler Aset Frontend
+    npm run dev
 
-## License
+    # Server WebSocket
+    php artisan reverb:start
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    # Pekerja Antrian
+    php artisan queue:work
+
+    # Penjadwal (simulasi Cron Job)
+    php artisan schedule:work
+    ```
+---
+
+## 🧪 Menjalankan Tes
+
+Untuk menjalankan tes otomatis yang sudah dibuat:
+```bash
+php artisan test
+```

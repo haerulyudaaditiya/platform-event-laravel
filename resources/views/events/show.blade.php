@@ -21,43 +21,63 @@
                         <div class="md:col-span-1 mt-8 md:mt-0 md:sticky md:top-24">
                             <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
                                 <div class="space-y-4 text-gray-700">
-                                    <p><strong class="block text-gray-800">📅 Tanggal & Waktu</strong>{{ \Carbon\Carbon::parse($event->start_time)->format('d F Y') }} <br><span class="text-sm">{{ \Carbon\Carbon::parse($event->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($event->end_time)->format('H:i') }} WIB</span></p>
+                                    <p>
+                                        <strong class="block text-gray-800">📅 Tanggal & Waktu</strong>
+                                        @php
+                                            $startTime = \Carbon\Carbon::parse($event->start_time);
+                                            $endTime = \Carbon\Carbon::parse($event->end_time);
+                                        @endphp
+
+                                        {{ $startTime->format('d F Y') }}
+                                        @if ($startTime->isSameDay($endTime))
+                                            <br><span class="text-sm">{{ $startTime->format('H:i') }} - {{ $endTime->format('H:i') }} WIB</span>
+                                        @else
+                                            - {{ $endTime->format('d F Y') }}
+                                            <br><span class="text-sm">Pukul {{ $startTime->format('H:i') }} s/d {{ $endTime->format('H:i') }} WIB</span>
+                                        @endif
+                                    </p>
                                     <p><strong class="block text-gray-800">📍 Lokasi</strong>{{ $event->venue }} <br><span class="text-sm">{{ $event->location }}</span></p>
                                 </div>
                             </div>
 
-                            @if (auth()->guest() || auth()->id() !== $event->user_id)
+                            @if (auth()->guest() || (auth()->check() && auth()->user()->role === 'user'))
                                 <div>
                                     <h3 class="text-xl font-semibold mb-4 text-gray-800">Pilih Tiket</h3>
                                     <div class="space-y-4">
                                         @forelse ($event->tickets as $ticket)
                                             <form action="{{ route('bookings.store', $ticket) }}" method="POST">
                                                 @csrf
-                                                <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center shadow-sm">
-                                                    <div>
-                                                        <p class="font-bold text-lg text-gray-800">{{ $ticket->name }}</p>
-                                                        <p class="text-indigo-600 font-semibold">Rp {{ number_format($ticket->price) }}</p>
-                                                        <p class="text-xs text-gray-500 mt-1">{{ $ticket->quantity }} tiket tersedia</p>
+                                                    <div class="border border-gray-200 p-4 rounded-lg flex justify-between items-center shadow-sm">
+                                                        <div>
+                                                            <p class="font-bold text-lg text-gray-800">{{ $ticket->name }}</p>
+                                                            <p class="text-indigo-600 font-semibold">Rp {{ number_format($ticket->price) }}</p>
+                                                            <p class="text-xs text-gray-500 mt-1">{{ $ticket->quantity }} tiket tersedia</p>
+                                                        </div>
+                                                        <div class="flex items-center space-x-2">
+                                                            <input type="number" name="quantity" class="w-16 border-gray-300 rounded-md shadow-sm" value="1" min="1" max="{{ $ticket->quantity }}">
+                                                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">Beli</button>
+                                                        </div>
                                                     </div>
-                                                    <div class="flex items-center space-x-2">
-                                                        <input type="number" name="quantity" class="w-16 border-gray-300 rounded-md shadow-sm" value="1" min="1" max="{{ $ticket->quantity }}">
-                                                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">Beli</button>
-                                                    </div>
-                                                </div>
-                                            </form>
+                                                </form>
                                         @empty
                                             <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                                                 <p class="text-yellow-800">Tiket untuk event ini belum tersedia.</p>
                                             </div>
-                                        @endforelse
+                                            @endforelse
                                     </div>
                                 </div>
                             @else
                                 <div class="bg-blue-50 p-6 rounded-lg shadow-inner">
                                     <h3 class="text-xl font-semibold mb-4 text-blue-800">Mode Organizer</h3>
-                                    <p class="text-blue-700">Ini adalah halaman pratinjau untuk event Anda. Form pembelian tiket disembunyikan.</p>
-                                    <a href="{{ route('events.attendees', $event) }}" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
-                                        Lihat Daftar Peserta
+                                    <p class="text-blue-700">
+                                        @if(auth()->id() === $event->user_id)
+                                            Ini adalah halaman pratinjau untuk event Anda.
+                                        @else
+                                            Anda melihat halaman ini sebagai organizer.
+                                        @endif
+                                    </p>
+                                    <a href="{{ route('events.index') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                                        Kembali ke Dasbor
                                     </a>
                                 </div>
                             @endif

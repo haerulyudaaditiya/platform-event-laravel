@@ -16,7 +16,7 @@ Route::post('/midtrans/notification', [PaymentController::class, 'notificationHa
 //     return view('dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -26,8 +26,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/{event}/attendees', [EventController::class, 'attendees'])->name('events.attendees');
     Route::get('/events/{event}/scan', [EventController::class, 'scanner'])->name('events.scanner');
 
-    Route::get('/events/{event}/tickets', [TicketController::class, 'index'])->name('tickets.index')->middleware('role:organizer,admin');
-    Route::post('/events/{event}/tickets', [TicketController::class, 'store'])->name('tickets.store')->middleware('role:organizer,admin');
+    Route::resource('events.tickets', TicketController::class)
+        ->except(['show'])
+        ->middleware('role:organizer,admin');
 
     Route::post('/bookings/{ticket}', [BookingController::class, 'store'])->name('bookings.store');
     Route::get('/cart', [BookingController::class, 'cart'])->name('cart.index');
@@ -41,6 +42,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/transactions/{transaction}/pay', [PaymentController::class, 'payTransaction'])->name('transactions.pay');
     Route::get('/payment/pending', [PaymentController::class, 'paymentPending'])->name('payment.pending');
     Route::get('/payment/error', [PaymentController::class, 'paymentError'])->name('payment.error');
+
+    Route::get('/organizer/sales-chart', [EventController::class, 'salesChartData'])->name('sales-chart');
+
+    Route::get('/events/{event}/attendees/export', [EventController::class, 'exportAttendees'])->name('events.attendees.export');
 });
 
 Route::get('/admin/dashboard', function () {

@@ -7,6 +7,8 @@
 
         <title>{{ config('app.name', 'Platform Event') }}</title>
 
+        <link rel="icon" href="{{ asset('icon/icon.png') }}" type="image/png">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
@@ -40,15 +42,33 @@
                             @auth
                                 @if(auth()->user()->role === 'user')
                                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                        <x-nav-link :href="route('home')" :active="request()->routeIs('home')">
+                                        <a href="{{ route('home') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
+                                            {{ request()->routeIs('home')
+                                                ? 'border-indigo-400 text-white'
+                                                : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300' }}">
                                             {{ __('Event') }}
-                                        </x-nav-link>
-                                        <x-nav-link :href="route('cart.index')" :active="request()->routeIs('cart.index')">
-                                            {{ __('Keranjang') }}
-                                        </x-nav-link>
-                                        <x-nav-link :href="route('bookings.index')" :active="request()->routeIs('bookings.index')">
+                                        </a>
+                                        <a href="{{ route('cart.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
+                                            {{ request()->routeIs('cart.index')
+                                                ? 'border-indigo-400 text-white'
+                                                : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300' }}">
+
+                                            <span class="flex items-center">
+                                                {{ __('Keranjang') }}
+
+                                                @if (isset($cartCount) && $cartCount > 0)
+                                                    <span class="ms-2 inline-flex items-center justify-center h-5 w-5 text-xs font-bold text-white bg-red-600 rounded-full">
+                                                        {{ $cartCount }}
+                                                    </span>
+                                                @endif
+                                            </span>
+                                        </a>
+                                        <a href="{{ route('bookings.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out
+                                            {{ request()->routeIs('bookings.index')
+                                                ? 'border-indigo-400 text-white'
+                                                : 'border-transparent text-gray-400 hover:text-white hover:border-gray-300' }}">
                                             {{ __('Riwayat') }}
-                                        </x-nav-link>
+                                        </a>
                                     </div>
                                 @endif
                             @endauth
@@ -85,7 +105,7 @@
                             @else
                                 @if (Route::has('register'))
                                     <a href="{{ route('register') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
-                                        Register
+                                        Daftar
                                     </a>
                                 @endif
                             @endauth

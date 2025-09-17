@@ -21,6 +21,8 @@
         "vite": "^7.0.4"
     },
     "dependencies": {
-        "html5-qrcode": "^2.3.8"
+        "chart.js": "^4.5.0",
+        "html5-qrcode": "^2.3.8",
+        "sweetalert2": "^11.23.0"
     }
 }

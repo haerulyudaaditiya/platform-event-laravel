@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
          // Menambahkan alias middleware untuk 'role'
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'NoCaptcha' => \Anhskohbo\NoCaptcha\Facades\NoCaptcha::class,
         ]);
          $middleware->validateCsrfTokens(except: [
             'midtrans/notification',
@@ -23,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withProviders([
         App\Providers\AuthServiceProvider::class,
+        Anhskohbo\NoCaptcha\NoCaptchaServiceProvider::class,
+        App\Providers\ViewServiceProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //

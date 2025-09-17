@@ -55,7 +55,7 @@ class BookingController extends Controller
         });
 
         // Redirect dengan pesan sukses
-        return redirect()->route('home')->with('success', 'Tiket berhasil dipesan!');
+        return back()->with('success', 'Tiket berhasil ditambahkan ke keranjang!');
     }
 
     public function index(Request $request)

@@ -6,13 +6,39 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
+                    <h3 class="text-lg font-semibold mb-4">Arahkan QR Code ke Kamera</h3>
                     <div id="qr-reader" style="width:100%"></div>
                     <div id="qr-reader-results" class="mt-4"></div>
                 </div>
             </div>
+
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+                    <h3 class="text-lg font-semibold mb-4">Riwayat Check-in Terakhir</h3>
+                    <div class="space-y-3">
+                        @forelse($recentCheckIns as $booking)
+                            <div class="flex items-center space-x-3 bg-gray-50 p-2 rounded-md">
+                                <span class="text-green-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </span>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-800">{{ $booking->user->name }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        Check-in pada: {{ $booking->updated_at->format('H:i:s') }}
+                                    </p>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-sm text-gray-500">Belum ada peserta yang melakukan check-in.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 

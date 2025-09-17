@@ -24,7 +24,17 @@
                             <div>
                                 <p class="font-semibold text-sm mb-2 text-gray-800">Detail Event:</p>
                                 <div class="text-sm text-gray-700">
-                                    <p><strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($booking->event->start_time)->format('d F Y') }}</p>
+                                    <p><strong>Tanggal:</strong>
+                                        @php
+                                            $startTime = \Carbon\Carbon::parse($booking->event->start_time);
+                                            $endTime = \Carbon\Carbon::parse($booking->event->end_time);
+                                        @endphp
+
+                                        {{ $startTime->format('d F Y') }}
+                                        @if (!$startTime->isSameDay($endTime))
+                                            - {{ $endTime->format('d F Y') }}
+                                        @endif
+                                    </p>
                                     <p><strong>Waktu:</strong> {{ \Carbon\Carbon::parse($booking->event->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->event->end_time)->format('H:i') }} WIB</p>
                                     <p><strong>Tempat:</strong> {{ $booking->event->venue }}</p>
                                 </div>

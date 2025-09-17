@@ -4,29 +4,36 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 md:p-8 text-gray-900">
                     <h2 class="text-3xl font-bold mb-6 text-gray-800">Keranjang Anda</h2>
-
-                    <x-auth-session-status class="mb-4" :status="session('success')" />
-                    <x-input-error :messages="$errors->all()" class="mb-4"/>
-
                     @if($pendingBookings->isNotEmpty())
                         <form id="cart-form" action="" method="POST">
                             @csrf
                             <input type="hidden" name="_method" id="form-method-input" value="POST">
 
+                            <div class="mb-4">
+                                <label for="select-all" class="flex items-center text-sm">
+                                    <input type="checkbox" id="select-all" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="ml-2 text-gray-700">Pilih Semua</span>
+                                </label>
+                            </div>
+
                             <div class="space-y-6">
                                 @foreach ($pendingBookings as $booking)
                                     <div class="border rounded-lg shadow-sm overflow-hidden flex items-start p-4 space-x-4 border-gray-200">
                                         <input type="checkbox" name="booking_ids[]" value="{{ $booking->id }}"
-                                               class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                               class="booking-checkbox mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
 
                                         <div class="flex-grow">
                                             <p class="text-sm text-yellow-800 font-semibold bg-yellow-50 border border-yellow-200 rounded-md p-2 mb-2">
                                                 Pesanan ini akan otomatis dibatalkan jika tidak dibayar dalam 1 jam.
                                             </p>
                                             <h3 class="font-bold text-xl text-gray-900">{{ $booking->event->name }}</h3>
-                                            <p class="text-sm text-gray-600 mb-3">{{ $booking->event->venue }}</p>
 
-                                            <ul class="text-gray-700 text-sm space-y-1 my-2">
+                                            <div class="text-sm text-gray-500 mb-3 space-y-1">
+                                                <p>📅 {{ \Carbon\Carbon::parse($booking->event->start_time)->format('d M Y') }}</p>
+                                                <p>📍 {{ $booking->event->venue }}</p>
+                                            </div>
+
+                                            <ul class="text-gray-700 text-sm space-y-1">
                                                 @foreach ($booking->tickets as $ticket)
                                                     <li class="flex justify-between">
                                                         <span>{{ $ticket->pivot->quantity }}x {{ $ticket->name }}</span>
@@ -46,9 +53,9 @@
 
                             <div class="mt-6 flex justify-between items-center border-t pt-6">
                                 <div>
-                                    <button type="submit"
-                                            onclick="submitCartAction('{{ route('cart.delete-selected') }}', 'DELETE')"
-                                            class="text-sm text-red-600 hover:underline">
+                                    <button type="button"
+                                            onclick="confirmDelete()"
+                                            class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50">
                                         Hapus yang Dipilih
                                     </button>
                                 </div>
@@ -71,21 +78,40 @@
     </div>
     @push('scripts')
     <script>
-        function submitCartAction(actionUrl, method) {
-            event.preventDefault(); // Mencegah submit default
+        // Fungsi untuk select all
+        document.getElementById('select-all').addEventListener('change', function(event) {
+            document.querySelectorAll('.booking-checkbox').forEach(checkbox => {
+                checkbox.checked = event.target.checked;
+            });
+        });
+
+        // Fungsi untuk konfirmasi hapus dengan SweetAlert
+        function confirmDelete() {
             const form = document.getElementById('cart-form');
-            const methodInput = document.getElementById('form-method-input');
-
-            if (method === 'DELETE') {
-                if (!confirm('Anda yakin ingin menghapus item yang dipilih?')) {
-                    return; // Batalkan jika user klik 'Cancel'
+            Swal.fire({
+                title: 'Anda yakin?',
+                text: "Pesanan yang dipilih akan dihapus secara permanen!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.action = '{{ route("cart.delete-selected") }}';
+                    form.querySelector('input[name=_method]').value = 'DELETE';
+                    form.submit();
                 }
-                methodInput.value = 'DELETE';
-            } else {
-                methodInput.value = 'POST';
-            }
+            })
+        }
 
+        // Fungsi submit utama (disempurnakan)
+        function submitCartAction(actionUrl, method) {
+            event.preventDefault();
+            const form = document.getElementById('cart-form');
             form.action = actionUrl;
+            form.querySelector('input[name=_method]').value = method;
             form.submit();
         }
     </script>

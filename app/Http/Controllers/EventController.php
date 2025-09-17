@@ -8,6 +8,10 @@ use Illuminate\Http\Request;;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use App\Exports\AttendeesExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
@@ -16,16 +20,36 @@ class EventController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request) // <-- Jangan lupa tambahkan Request
     {
         $organizer = auth()->user();
-        $events = $organizer->events()->latest()->paginate(10);
 
-        // Hitung statistik
+        // 1. Mulai query dasar
+        $query = $organizer->events()
+                        ->withCount(['bookings' => function ($query) {
+                            $query->where('status', 'paid');
+                        }]);
+
+        // 2. Terapkan filter status
+        if ($request->filled('status')) {
+            if ($request->status == 'published') {
+                $query->where('is_published', true);
+            } elseif ($request->status == 'draft') {
+                $query->where('is_published', false);
+            }
+        }
+
+        // 3. Terapkan filter pencarian
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // 4. Eksekusi query
+        $events = $query->latest()->paginate(10)->withQueryString();
+
+        // Hitung statistik (tetap sama)
         $totalEvents = $organizer->events()->count();
-        // Ambil semua ID event milik organizer ini
         $eventIds = $organizer->events()->pluck('id');
-        // Cari semua booking yang sudah lunas untuk event-event tersebut
         $paidBookings = Booking::whereIn('event_id', $eventIds)->where('status', 'paid')->get();
 
         $totalRevenue = $paidBookings->sum('total_price');
@@ -51,33 +75,48 @@ class EventController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validasi data yang masuk
+        // 1. Validasi semua data yang masuk, termasuk input baru
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'category' => 'required|string|in:Musik,Seminar,Olahraga,Festival',
             'description' => 'required|string',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Menggunakan image_file
             'start_time' => 'required|date',
             'end_time' => 'required|date|after_or_equal:start_time',
             'venue' => 'required|string|max:255',
             'location' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'category' => 'required|string|in:Musik,Seminar,Olahraga,Festival',
+            'ticket_price' => ['nullable', 'integer', 'min:0', 'required_with:ticket_quantity'],
+            'ticket_quantity' => ['nullable', 'integer', 'min:1', 'required_with:ticket_price'],
+            'is_published' => ['nullable', 'boolean'],
         ]);
 
-        if ($request->hasFile('image')) {
-            // Simpan gambar di folder 'storage/app/public/event-images'
-            $path = $request->file('image')->store('event-images', 'public');
+        // 2. Proses upload gambar jika ada
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('event-images', 'public');
+            // Simpan path ke kolom 'image' di database
             $validated['image'] = $path;
         }
 
-        // 2. Tambahkan user_id dari user yang sedang login
+        // 3. Proses status publikasi dari checkbox
+        $validated['is_published'] = $request->boolean('is_published');
+
+        // 4. Tambahkan user_id dari user yang sedang login
         $validated['user_id'] = Auth::id();
 
-        // 3. Simpan data ke database
-        Event::create($validated);
+        // 5. Buat event baru dengan data yang sudah divalidasi
+        $event = Event::create($validated);
 
-        // 4. Redirect ke halaman index dengan pesan sukses
-        return redirect()->route('events.index')
-                        ->with('success', 'Event berhasil dibuat!');
+        // 6. Buat tiket dasar "Regular" jika harga & kuantitas diisi
+        if ($request->filled('ticket_price') && $request->filled('ticket_quantity')) {
+            $event->tickets()->create([
+                'name' => 'Regular',
+                'price' => $request->ticket_price,
+                'quantity' => $request->ticket_quantity,
+            ]);
+        }
+
+        // 7. Redirect ke halaman index dengan pesan sukses
+        return redirect()->route('events.index')->with('success', 'Event berhasil dibuat!');
     }
 
     /**
@@ -165,26 +204,33 @@ class EventController extends Controller
 
     public function attendees(Event $event)
     {
-        // 1. Otorisasi: Pastikan hanya pemilik event yang bisa melihat pesertanya
         $this->authorize('update', $event);
 
-        // 2. Ambil semua booking untuk event ini yang statusnya sudah 'paid'
-        $bookings = $event->bookings()
-                          ->where('status', 'paid')
-                          ->with('user', 'tickets') // Eager load untuk optimasi
-                          ->latest()
-                          ->paginate(10);
+        $bookingsQuery = $event->bookings()->whereIn('status', ['paid', 'checked-in']);
 
-        // 3. Tampilkan view dengan data yang sudah diambil
-        return view('events.attendees', compact('event', 'bookings'));
+        // Hitung statistik
+        $attendeesCheckedIn = $event->bookings()->where('status', 'checked-in')->count();
+        $totalAttendees = $bookingsQuery->count();
+
+        $bookings = $bookingsQuery->with('user', 'tickets')->latest()->paginate(10);
+
+        return view('events.attendees', compact('event', 'bookings', 'attendeesCheckedIn', 'totalAttendees'));
     }
 
     public function scanner(Event $event)
     {
-        // Otorisasi: Pastikan hanya pemilik event yang bisa mengakses scanner
+        // Otorisasi
         $this->authorize('update', $event);
 
-        return view('events.scanner', compact('event'));
+        // Ambil 10 booking terakhir yang sudah check-in untuk event ini
+        $recentCheckIns = $event->bookings()
+                                ->where('status', 'checked-in')
+                                ->with('user')
+                                ->latest('updated_at') // Urutkan berdasarkan waktu check-in terbaru
+                                ->take(10)
+                                ->get();
+
+        return view('events.scanner', compact('event', 'recentCheckIns'));
     }
 
     public function scanTicket(Request $request)
@@ -193,9 +239,24 @@ class EventController extends Controller
             'unique_code' => 'required|string|exists:bookings,unique_code',
         ]);
 
-        $booking = Booking::where('unique_code', $validated['unique_code'])->first();
+        // Tambahkan 'with('event')' untuk mengambil data event terkait
+        $booking = Booking::where('unique_code', $validated['unique_code'])->with('event')->first();
 
-        // Cek apakah tiket sudah pernah di-check-in
+        // =======================================================
+        // PENGECEKAN BARU: Apakah event sudah berakhir?
+        // =======================================================
+        if (now()->gt($booking->event->end_time)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Event ini sudah berakhir.',
+                'data' => [
+                    'name' => $booking->user->name,
+                    'event_name' => $booking->event->name,
+                ]
+            ], 400); // 400 Bad Request
+        }
+
+        // Pengecekan lama: Apakah sudah pernah check-in?
         if ($booking->status == 'checked-in') {
             return response()->json([
                 'status' => 'error',
@@ -217,5 +278,46 @@ class EventController extends Controller
                 'name' => $booking->user->name,
             ]
         ]);
+    }
+
+    public function salesChartData()
+    {
+        $user = auth()->user();
+        $eventIds = $user->events()->pluck('id');
+
+        // Ambil data total pendapatan per hari selama 7 hari terakhir
+        $salesData = Booking::select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('SUM(total_price) as total')
+            )
+            ->whereIn('event_id', $eventIds)
+            ->where('status', 'paid')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
+        // Format data untuk Chart.js
+        $labels = $salesData->pluck('date')->map(function ($date) {
+            return \Carbon\Carbon::parse($date)->format('d M');
+        });
+        $data = $salesData->pluck('total');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $data,
+        ]);
+    }
+
+    public function exportAttendees(Event $event)
+    {
+        // Otorisasi
+        $this->authorize('update', $event);
+
+        // Buat nama file yang unik
+        $fileName = 'peserta-' . Str::slug($event->name) . '.xlsx';
+
+        // Panggil class export dan unduh filenya
+        return Excel::download(new AttendeesExport($event), $fileName);
     }
 }

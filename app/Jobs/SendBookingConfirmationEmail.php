@@ -1,14 +1,14 @@
 <?php
+
 namespace App\Jobs;
 
-use App\Mail\BookingConfirmed; // <-- Import
-use App\Models\Booking; // <-- Import
+use App\Models\Booking;
+use App\Notifications\BookingConfirmationNotification; // <-- Import notifikasi baru
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail; // <-- Import
 
 class SendBookingConfirmationEmail implements ShouldQueue
 {
@@ -23,7 +23,7 @@ class SendBookingConfirmationEmail implements ShouldQueue
 
     public function handle(): void
     {
-        // Kirim email menggunakan Mailable yang sudah dibuat
-        Mail::to($this->booking->user->email)->send(new BookingConfirmed($this->booking));
+        // Ganti Mail::send() dengan ->notify()
+        $this->booking->user->notify(new BookingConfirmationNotification($this->booking));
     }
 }
